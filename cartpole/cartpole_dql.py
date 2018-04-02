@@ -17,7 +17,8 @@ EXPLORATION_RATE = 1.0
 EXPLORATION_MIN = 0.01
 EXPLORATION_DECAY = 0.995
 SAMPLE_BATCH_SIZE = 32
-EPISODES = 2000
+EPISODES = 1000
+SCORE_TO_BEAT = 195
 
 class Agent():
 	def __init__(self, state_size, action_size):
@@ -80,34 +81,43 @@ class CartPole:
 		self.state_size        = self.env.observation_space.shape[0]
 		self.action_size       = self.env.action_space.n
 		self.agent             = Agent(self.state_size, self.action_size)
-		self.scores            = []
+		self.score_to_beat     = SCORE_TO_BEAT
+		#self.scores            = []
 
 	def run(self):
-		try:
-			for index_episode in range(self.episodes):
-				state = self.env.reset()
-				state = np.reshape(state, [1, self.state_size])
+		last_100_scores = deque(maxlen=100)
 
-				done = False
-				index = 0
-				while not done:
-					#self.env.render()
+		for episode in range(self.episodes):
+			state = self.env.reset()
+			state = np.reshape(state, [1, self.state_size])
 
-					action = self.agent.act(state)
+			done = False
+			score = 0
+			while not done:
+				#self.env.render()
+				action = self.agent.act(state)
+				next_state, reward, done, _ = self.env.step(action)
+				next_state = np.reshape(next_state, [1, self.state_size])
+				self.agent.remember(state, action, reward, next_state, done)
+				state = next_state
+				score += 1
 
-					next_state, reward, done, _ = self.env.step(action)
-					next_state = np.reshape(next_state, [1, self.state_size])
-					self.agent.remember(state, action, reward, next_state, done)
-					state = next_state
-					index += 1
-				print("Episode {}# Score: {}".format(index_episode, index))
+			#print("Episode {}# Score: {}".format(episode, score))
 
-				self.scores.append(index)
+			last_100_scores.append(score)
+			mean_score = np.mean(last_100_scores)
+			if mean_score >= self.score_to_beat and episode >= 100:
+				print('Ran {} episodes. Solved after {} trials'.format(episode, episode - 100))
+				return episode - 100
+			if episode % 100 == 0 and episode > 0:
+				print('[Episode {}] - Mean survival time over last 100 episodes was {} ticks.'.format(episode, mean_score))
 
-				self.agent.replay(self.sample_batch_size)
-		finally:
-			self.agent.save_model()
-			self.plot()
+			#self.scores.append(score)
+			self.agent.replay(self.sample_batch_size)
+
+		print('Did not solve after {} episodes'.format(episode))
+		self.agent.save_model()
+		#self.plot()
 
 	def plot(self):
 		x_axis = np.arange(0, len(self.scores), 1)
