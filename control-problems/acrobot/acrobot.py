@@ -18,12 +18,9 @@ GAMMA = 0.85
 EXPLORATION_RATE = 1.0
 EXPLORATION_MIN = 0.01
 EXPLORATION_DECAY = 0.998 #exp_rate = .5 after 342 episodes; .1 after 1140; .01 after 3400
-#EXPLORATION_DECAY = 0.995 #exp_rate = .5 after 138 episodes; .1 after 460; .01 after 914
-#EXPLORATION_DECAY = 0.99 #exp_rate = .5 after 69 episodes; .1 after 228; .01 after 455
-#EXPLORATION_DECAY = 0.95 #exp_rate = .5 after 13 episodes; .1 after 45; .01 after 89
 SAMPLE_BATCH_SIZE = 32
 EPISODES = 1000
-SCORE_TO_BEAT = 505
+SCORE_TO_BEAT = -100
 PLOT = True
 START_FRESH = False
 
@@ -71,7 +68,7 @@ class Agent():
 		q = np.amax(act_values[0])
 		if np.random.rand() <= self.exploration_rate:
 			return random.randrange(self.action_size)
-		
+
 		return np.argmax(act_values[0])
 
 	def remember(self, state, action, reward, next_state, done):
@@ -118,7 +115,6 @@ class CartPole:
 				action = self.agent.act(state, score)
 				next_state, reward, done, _ = self.env.step(action)
 				next_state = np.reshape(next_state, [1, self.state_size])
-				#print(reward)
 				self.agent.remember(state, action, reward, next_state, done)
 				state = next_state
 				score += reward

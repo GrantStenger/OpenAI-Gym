@@ -11,21 +11,18 @@ import scipy.stats
 import pandas as pd
 from keras.utils import plot_model
 
-ENV_NAME = "Acrobot-v1"
+ENV_NAME = "CartPole-v0"
 DEQUE_SIZE = 2000
 LEARNING_RATE = 0.001
 GAMMA = 0.85
 EXPLORATION_RATE = 1.0
 EXPLORATION_MIN = 0.01
-#EXPLORATION_DECAY = 0.998 #exp_rate = .5 after 342 episodes; .1 after 1140; .01 after 3400
-EXPLORATION_DECAY = 0.995 #exp_rate = .5 after 138 episodes; .1 after 460; .01 after 914
-#EXPLORATION_DECAY = 0.99 #exp_rate = .5 after 69 episodes; .1 after 228; .01 after 455
-#EXPLORATION_DECAY = 0.95 #exp_rate = .5 after 13 episodes; .1 after 45; .01 after 89
+EXPLORATION_DECAY = 0.99 #exp_rate = .5 after 69 episodes; .1 after 228; .01 after 455
 SAMPLE_BATCH_SIZE = 32
-EPISODES = 1000
+EPISODES = 500
 SCORE_TO_BEAT = 195
 PLOT = True
-START_FRESH = False
+START_FRESH = True
 
 class Agent():
 	def __init__(self, state_size, action_size):
@@ -71,7 +68,7 @@ class Agent():
 		q = np.amax(act_values[0])
 		if np.random.rand() <= self.exploration_rate:
 			return random.randrange(self.action_size)
-		
+
 		return np.argmax(act_values[0])
 
 	def remember(self, state, action, reward, next_state, done):
@@ -90,15 +87,12 @@ class Agent():
 			self.model.fit(state, target_f, epochs=1, verbose=0)
 		if self.exploration_rate > self.exploration_min:
 			self.exploration_rate *= self.exploration_decay
-		print(exploration_rate)
 
 class CartPole:
 	def __init__(self):
 		self.sample_batch_size = SAMPLE_BATCH_SIZE
 		self.episodes          = EPISODES
 		self.env               = gym.make(ENV_NAME)
-		#print(self.env.max_episode_steps)
-
 		self.state_size        = self.env.observation_space.shape[0]
 		self.action_size       = self.env.action_space.n
 		self.agent             = Agent(self.state_size, self.action_size)
@@ -116,7 +110,7 @@ class CartPole:
 			done = False
 			score = 0
 			while not done:
-				#self.env.render()
+				self.env.render()
 				action = self.agent.act(state, score)
 				next_state, reward, done, _ = self.env.step(action)
 				next_state = np.reshape(next_state, [1, self.state_size])
